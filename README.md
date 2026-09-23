@@ -1,123 +1,151 @@
-# Thr-Fit — Website Project Handover
+# Thr-Fit
 
-**Project:** Thr-Fit Fashion Marketplace Platform  
-**Developer:** Praisel.dev Limited  
-**Client:** Rachel  
-**Stage:** Stage 3 — Website Development (Payment 2 of 3)  
-**Handover Date:** May 2026
+A fashion resale marketplace — browse secondhand pieces, list your own, give clothing a second life.
 
----
+Built with Next.js 16 (App Router), React 19, Tailwind CSS v4 and Firebase.
 
-## Project Overview
-
-Thr-Fit is a fashion resale and collaboration platform built with Next.js (App Router), Tailwind CSS, and Firebase. The platform is designed to allow users to discover outfits, list fashion items for sale, and collaborate on styling ideas.
+> **Background.** Thr-Fit began as a commissioned build that was paused partway
+> through. It's being completed here as a portfolio project, so the remaining
+> scope and design decisions are my own.
 
 ---
 
-## What Has Been Built
-
-### Foundation & Infrastructure
-- Next.js 15 (App Router) project fully initialised and configured
-- Firebase project (`thr-fit-marketplace`) set up with the following services:
-  - **Firebase Auth** — authentication service initialised and connected
-  - **Firestore** — database configured and connected
-  - **Firebase Storage** — file/photo storage configured and connected
-- Custom branding fonts integrated (Yeseva One + Roboto via Google Fonts)
-- Global layout with branded full-screen background video (`golden-brown-moving-bg.mp4`)
-- Dark overlay system for readability
-- Tailwind CSS configured with custom font variables
-- TypeScript configured throughout
-
-### Landing Page (`/`)
-- Fully designed and branded Hero section
-  - Custom headline typography: *"Thr-fited. Reimagined."*
-  - Subtitle copy and two CTA buttons: *Browse Marketplace* and *Start Selling*
-- Featured Listings section with product card grid layout
-  - Listing cards with title, price, condition tag, and image areas
-  - "View all" link to marketplace
-- Categories section with filterable fashion category links (Hoodies, Jackets, Vintage, Streetwear, Shoes, Accessories, Women, Men)
-- Sell CTA banner with link to listing creation flow
-
-### Components Built
-| Component | Description |
-|---|---|
-| `Hero.tsx` | Branded full-screen hero with CTA buttons |
-| `FeaturedListings.tsx` | Product grid with listing cards |
-| `Categories.tsx` | Category filter row + seller CTA |
-| `ListingCard.tsx` | Reusable card component for marketplace items |
-| `BackgroundVideo.tsx` | Full-screen looping background video |
-
-### Backend / Data Layer
-| File | Description |
-|---|---|
-| `firebase.ts` | Firebase app initialisation (Auth, Firestore, Storage) |
-| `lib/listings.ts` | `createListing()` function — writes listing data to Firestore |
-| `lib/storageUploads.ts` | Photo upload utility for Firebase Storage |
-
-### Route Structure
-| Route | Status |
-|---|---|
-| `/` | ✅ Complete — landing page |
-| `/marketplace` | 🔄 Route created, UI pending |
-| `/create` | 🔄 Route created, UI pending |
-| `/dashboard` | 🔄 Route created, UI pending |
-
----
-
-## What Is Pending (Stages 4–6)
-
-The following items were not completed due to the project being paused. Progress on Stage 3 was halted after the client review meeting, at which the client indicated dissatisfaction with the direction and was asked to complete a design preferences questionnaire to guide further development. **That questionnaire was never returned by the client**, which prevented the project from advancing to the next phase.
-
-Pending items include:
-
-- Marketplace page UI (product browsing, filtering, search)
-- Create listing page UI (photo upload, form, submission flow)
-- User dashboard UI
-- User authentication screens (login / register)
-- User profile pages
-- SEO metadata configuration
-- Mobile responsive refinements
-
-These items fall under Stage 3 (remaining), Stage 4 (App Core Development), Stage 5 (Integration & Admin), and Stage 6 (Testing & Deployment) — none of which were reached due to the project being closed by the client.
-
----
-
-## Running the Project Locally
+## Getting started
 
 ```bash
-# Install dependencies
 npm install
-
-# Start development server
+cp .env.example .env.local   # fill in your Firebase config
 npm run dev
 ```
 
-The app will run at `http://localhost:3000`.
+The app runs at `http://localhost:3000`.
 
-**Note:** A `.env` file is required for Firebase credentials. The Firebase project is `thr-fit-marketplace`. Contact Praisel.dev for environment variable setup if needed.
+Firebase config comes from `NEXT_PUBLIC_FIREBASE_*` variables — see
+[`.env.example`](.env.example). The values live in the Firebase console under
+**Project settings → General → Your apps → SDK setup and configuration**. The app
+fails fast with a named error if any are missing, rather than breaking somewhere
+further downstream.
+
+### Local development without touching a real project
+
+The full publish path — anonymous sign-in, photo upload, Firestore write — runs
+against the local emulator suite, so development never writes to a live Firebase
+project.
+
+```bash
+npm run emulators     # auth, firestore, storage — UI at http://127.0.0.1:4000
+npm run dev:emulator  # dev server pointed at them, in a second terminal
+```
+
+The emulator wiring is gated behind `NEXT_PUBLIC_FIREBASE_EMULATORS`, so a plain
+`npm run dev` is unaffected.
+
+**Requires a Java runtime** — the Firestore and Storage emulators need one.
+`brew install openjdk` is enough; the `emulators` script finds a keg-only
+Homebrew install on its own, so no shell configuration is needed.
 
 ---
 
-## Technology Stack
+## Scripts
 
-| Technology | Purpose |
+| Script | Does |
 |---|---|
-| Next.js 15 (App Router) | Web framework |
-| TypeScript | Type safety |
-| Tailwind CSS | Styling |
-| Firebase Auth | User authentication |
-| Firestore | Database |
-| Firebase Storage | Media/photo storage |
-| Google Fonts | Custom typography |
+| `npm run dev` | Dev server against the configured Firebase project |
+| `npm run dev:emulator` | Dev server against the local emulator suite |
+| `npm run emulators` | Start auth, Firestore and Storage emulators |
+| `npm run build` | Production build |
+| `npm run start` | Serve the production build |
+| `npm run lint` | ESLint |
 
 ---
 
-## Notes on Project Closure
+## Structure
 
-This handover represents all website development work completed up to the point the project was paused. The source code, assets, Firebase project configuration, and all work completed are being handed over to the client in accordance with the terms of the development agreement signed between Praisel.dev Limited and the client.
+```
+app/
+  page.tsx              Landing page
+  marketplace/          Browse, filter and search listings
+  create/               Create-listing form
+  dashboard/            Seller dashboard (not built yet)
+  layout.tsx            Shell: fonts, metadata, video background
 
-All work delivered remains fully usable and buildable. The Firebase project is live and operational. A developer can continue from this foundation to complete the remaining pages and features.
+components/
+  Hero, FeaturedListings, Categories    Landing sections
+  ListingCard                           Shared by the landing grid and marketplace
+  MarketplaceBrowser                    Browsing, filtering and search
+  CreateListingForm                     Photo upload + validated listing form
+  BackgroundVideo                       Full-screen video with reduced-motion fallback
+
+lib/
+  firebase.ts           SDK init, env config, emulator wiring
+  listings.ts           Listing types, Firestore reads and writes, filtering
+  storageUploads.ts     Validated photo uploads
+  auth.ts               Session handling
+
+firestore.rules         Firestore security rules
+storage.rules           Storage security rules
+```
 
 ---
 
-*Handover prepared by Praisel.dev Limited — May 2026*
+## Notes on a few decisions
+
+**Listings are queried on a single field.** `fetchListings` orders by
+`createdAt` alone and narrows status and category in memory, which keeps it
+inside Firestore's automatic indexes — no composite index to configure. Past a
+few hundred listings those filters should move into `where()` clauses with a
+matching index in `firestore.indexes.json`.
+
+**Search runs client-side.** Firestore has no substring matching, so search
+filters the fetched page in the browser. Real full-text search means Algolia or
+Typesense; that's the upgrade path, not a workaround to keep.
+
+**Sellers are signed in anonymously.** Listings need a stable `sellerId` before
+the login screens exist. Linking a credential to an anonymous account preserves
+its uid, so listings created now stay attached to their seller once real accounts
+land.
+
+**Filters live in the URL.** Category and search are query params, so a filtered
+view is shareable and the back button behaves.
+
+**The background video has a way out.** It's a 9MB asset, so it loads behind a
+poster frame with `preload="metadata"`, and viewers who ask for reduced motion
+get the still image and never download the video at all.
+
+---
+
+## Security rules
+
+[`firestore.rules`](firestore.rules) and [`storage.rules`](storage.rules) are
+enforced by the emulator during development:
+
+- The marketplace is readable without an account.
+- Sellers write only as themselves, and only into their own storage folder.
+- Listing fields are shape-checked server-side, not just in the form.
+- Photos are capped at 5MB and limited to JPEG, PNG and WebP.
+- Anything unmatched is denied.
+
+Deploy them with `firebase deploy --only firestore:rules,storage`.
+
+---
+
+## Status
+
+| Area | State |
+|---|---|
+| Landing page | Done |
+| Marketplace browsing, filtering, search | Done |
+| Create-listing form with photo upload | Done |
+| Security rules | Written and verified locally |
+| Accounts — login, registration, profiles | Not built |
+| Individual listing pages | Not built |
+| Seller dashboard | Placeholder |
+| Messaging and collaboration | Not built |
+| Payments | Not built |
+
+---
+
+## Stack
+
+Next.js 16 · React 19 · TypeScript · Tailwind CSS v4 · Firebase (Auth, Firestore,
+Storage) · react-hook-form · Zod
