@@ -1,9 +1,14 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { connectAuthEmulator, getAuth } from "firebase/auth";
+import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
+import { connectStorageEmulator, getStorage } from "firebase/storage";
+
+const useEmulators = process.env.NEXT_PUBLIC_FIREBASE_EMULATORS === "true";
 
 function required(name: string, value: string | undefined) {
+  // The emulators accept any non-empty config, so don't demand real credentials.
+  if (useEmulators) return value || "demo-value";
+
   if (!value) {
     throw new Error(
       `Missing ${name}. Copy .env.example to .env.local and fill in the Firebase config.`
@@ -27,4 +32,20 @@ const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+// Point every SDK at the local emulator suite. Guarded by a module-level flag
+// because these throw if called twice, and Next's dev server re-evaluates
+// modules on hot reload.
+declare global {
+  var __firebaseEmulatorsConnected: boolean | undefined;
+}
+
+if (useEmulators && !globalThis.__firebaseEmulatorsConnected) {
+  globalThis.__firebaseEmulatorsConnected = true;
+
+  connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+  connectFirestoreEmulator(db, "127.0.0.1", 8080);
+  connectStorageEmulator(storage, "127.0.0.1", 9199);
+}
+
 export default app;

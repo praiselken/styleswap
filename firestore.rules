@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /listings/{listingId} {
+      // The marketplace is browsable without an account.
+      allow read: if true;
+
+      // Anyone signed in — including anonymously — can list an item, but only
+      // as themselves, and only with fields that hold their expected shape.
+      allow create: if request.auth != null
+                    && request.resource.data.sellerId == request.auth.uid
+                    && request.resource.data.title is string
+                    && request.resource.data.title.size() >= 3
+                    && request.resource.data.title.size() <= 80
+                    && request.resource.data.description is string
+                    && request.resource.data.description.size() <= 1000
+                    && request.resource.data.price is number
+                    && request.resource.data.price > 0
+                    && request.resource.data.price <= 10000
+                    && request.resource.data.photos is list
+                    && request.resource.data.photos.size() > 0
+                    && request.resource.data.photos.size() <= 6
+                    && request.resource.data.status == 'active';
+
+      // A seller owns their listing; the sellerId can never be reassigned.
+      allow update: if request.auth != null
+                    && resource.data.sellerId == request.auth.uid
+                    && request.resource.data.sellerId == resource.data.sellerId;
+
+      allow delete: if request.auth != null
+                    && resource.data.sellerId == request.auth.uid;
+    }
+
+    // Anything not matched above stays closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "emulators": "PATH=\"/opt/homebrew/opt/openjdk/bin:/usr/local/opt/openjdk/bin:$PATH\" firebase emulators:start --only auth,firestore,storage",
+    "dev:emulator": "NEXT_PUBLIC_FIREBASE_EMULATORS=true next dev"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -25,6 +27,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "firebase-tools": "^15.30.2",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

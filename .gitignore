@@ -43,3 +43,7 @@ next-env.d.ts
 
 # handover bundle (duplicate of the source tree)
 Thr-Fit-Website-Handover.zip
+
+# firebase emulators
+.firebase/
+*-debug.log
