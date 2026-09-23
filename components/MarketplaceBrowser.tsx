@@ -21,7 +21,6 @@ export default function MarketplaceBrowser() {
   useEffect(() => {
     let cancelled = false;
 
-    setState("loading");
     fetchListings()
       .then((results) => {
         if (cancelled) return;
@@ -39,8 +38,13 @@ export default function MarketplaceBrowser() {
     };
   }, []);
 
-  // Keep the input in step when the URL changes from outside (back button, category links).
-  useEffect(() => setSearchDraft(search), [search]);
+  // Keep the input in step when the URL changes from outside (back button, category
+  // links) without an effect round-trip: adjust during render, then re-render.
+  const [lastSearch, setLastSearch] = useState(search);
+  if (search !== lastSearch) {
+    setLastSearch(search);
+    setSearchDraft(search);
+  }
 
   const visible = useMemo(
     () => filterListings(listings, { category, search }),

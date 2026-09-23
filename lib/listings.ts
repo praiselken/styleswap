@@ -20,6 +20,14 @@ export const CATEGORIES = [
   "Men",
 ] as const;
 
+export const CONDITIONS = [
+  "New with tags",
+  "Like new",
+  "Excellent",
+  "Good",
+  "Well worn",
+] as const;
+
 export type ListingStatus = "active" | "sold" | "draft";
 
 export type Listing = {
