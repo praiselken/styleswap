@@ -3,14 +3,16 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import ListingCard from "./ListingCard";
+import StarRating from "./StarRating";
 import { fetchListings, filterListings, type Listing } from "@/lib/listings";
 import { fetchUserProfile, type UserProfile } from "@/lib/users";
-import { useAuthUser } from "@/lib/useAuthUser";
+import { useFavorites } from "@/lib/useFavorites";
+import { mockRatingFor } from "@/lib/mockRating";
 
 type LoadState = "loading" | "ready" | "not-found" | "error";
 
 export default function ProfileView({ uid }: { uid: string }) {
-  const { user: viewer } = useAuthUser();
+  const { user: viewer, favoriteIds, toggleFavorite } = useFavorites();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [listings, setListings] = useState<Listing[]>([]);
   const [state, setState] = useState<LoadState>("loading");
@@ -75,6 +77,7 @@ export default function ProfileView({ uid }: { uid: string }) {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="font-yeseva text-4xl md:text-5xl">{profile.displayName}</h1>
+            <StarRating {...mockRatingFor(uid)} className="mt-2" />
             {profile.location && <p className="mt-2 text-sm opacity-75">{profile.location}</p>}
             {profile.createdAt && (
               <p className="mt-1 text-xs opacity-60">
@@ -112,8 +115,10 @@ export default function ProfileView({ uid }: { uid: string }) {
               price={listing.price}
               photo={listing.photos[0]}
               tag={listing.category}
-              meta={[listing.condition, listing.size].filter(Boolean).join(" • ")}
+              meta={[listing.brand, listing.condition, listing.size].filter(Boolean).join(" • ")}
               href={`/listing/${listing.id}`}
+              favorited={favoriteIds.has(listing.id)}
+              onToggleFavorite={viewer ? () => toggleFavorite(listing.id) : undefined}
             />
           ))}
         </div>

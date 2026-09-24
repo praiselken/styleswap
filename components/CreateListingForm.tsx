@@ -25,6 +25,7 @@ const schema = z.object({
     .max(10000, "Listings over £10,000 need to go through support."),
   category: z.enum(CATEGORIES, { message: "Pick a category." }),
   condition: z.enum(CONDITIONS, { message: "Pick a condition." }),
+  brand: z.string().trim().max(40).optional(),
   size: z.string().trim().max(20).optional(),
   location: z.string().trim().max(60).optional(),
 });
@@ -118,6 +119,7 @@ export default function CreateListingForm() {
         price: parsed.price,
         category: parsed.category,
         condition: parsed.condition,
+        brand: parsed.brand || undefined,
         size: parsed.size || undefined,
         location: parsed.location || undefined,
         photos: urls,
@@ -241,6 +243,14 @@ export default function CreateListingForm() {
               className={fieldClass}
             />
             {errors.price && <p className={errorClass}>{errors.price.message}</p>}
+          </div>
+
+          <div>
+            <label htmlFor="brand" className={labelClass}>
+              Brand <span className="opacity-60">(optional)</span>
+            </label>
+            <input id="brand" {...register("brand")} placeholder="Carhartt" className={fieldClass} />
+            {errors.brand && <p className={errorClass}>{errors.brand.message}</p>}
           </div>
 
           <div>

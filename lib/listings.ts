@@ -38,6 +38,7 @@ export type Listing = {
   title: string;
   description: string;
   price: number;
+  brand?: string;
   size?: string;
   category?: string;
   condition?: string;
@@ -66,6 +67,7 @@ function toListing(id: string, data: Record<string, unknown>): Listing {
     title: typeof data.title === "string" ? data.title : "Untitled",
     description: typeof data.description === "string" ? data.description : "",
     price: typeof data.price === "number" ? data.price : 0,
+    brand: typeof data.brand === "string" ? data.brand : undefined,
     size: typeof data.size === "string" ? data.size : undefined,
     category: typeof data.category === "string" ? data.category : undefined,
     condition: typeof data.condition === "string" ? data.condition : undefined,
@@ -103,12 +105,14 @@ export type ListingFilters = {
   category?: string | null;
   search?: string | null;
   sellerId?: string | null;
+  minPrice?: number | null;
+  maxPrice?: number | null;
 };
 
 /**
- * Firestore has no substring search, so title/description matching happens here
- * on the page that was already fetched. Swap for Algolia or Typesense if the
- * catalogue ever needs real full-text search.
+ * Firestore has no substring search, so title/description/brand matching
+ * happens here on the page that was already fetched. Swap for Algolia or
+ * Typesense if the catalogue ever needs real full-text search.
  */
 export function filterListings(listings: Listing[], filters: ListingFilters) {
   const term = filters.search?.trim().toLowerCase();
@@ -120,11 +124,25 @@ export function filterListings(listings: Listing[], filters: ListingFilters) {
 
     if (filters.category && listing.category !== filters.category) return false;
 
+    if (filters.minPrice != null && listing.price < filters.minPrice) return false;
+    if (filters.maxPrice != null && listing.price > filters.maxPrice) return false;
+
     if (term) {
-      const haystack = `${listing.title} ${listing.description} ${listing.category ?? ""}`;
+      const haystack = `${listing.title} ${listing.description} ${listing.category ?? ""} ${listing.brand ?? ""}`;
       if (!haystack.toLowerCase().includes(term)) return false;
     }
 
     return true;
   });
+}
+
+export type ListingSort = "newest" | "price_asc" | "price_desc";
+
+/** `fetchListings` already returns newest-first, so "newest" is a no-op. */
+export function sortListings(listings: Listing[], sort: ListingSort) {
+  if (sort === "newest") return listings;
+
+  const sorted = [...listings];
+  sorted.sort((a, b) => (sort === "price_asc" ? a.price - b.price : b.price - a.price));
+  return sorted;
 }

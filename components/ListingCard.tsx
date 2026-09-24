@@ -10,6 +10,9 @@ export type ListingCardProps = {
   /** Supporting line under the title, e.g. "Used • Great". */
   meta?: string;
   href?: string;
+  /** Omit to hide the favorite heart entirely (e.g. for logged-out demo data). */
+  favorited?: boolean;
+  onToggleFavorite?: () => void;
 };
 
 export default function ListingCard({
@@ -19,6 +22,8 @@ export default function ListingCard({
   tag,
   meta,
   href,
+  favorited,
+  onToggleFavorite,
 }: ListingCardProps) {
   const card = (
     <article className="h-full rounded-2xl border border-white/20 bg-black/20 p-4 backdrop-blur-sm transition hover:border-white/50">
@@ -44,6 +49,24 @@ export default function ListingCard({
           <div className="flex h-full items-center justify-center text-xs opacity-50">
             No photo yet
           </div>
+        )}
+
+        {onToggleFavorite && (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onToggleFavorite();
+            }}
+            aria-label={favorited ? "Remove from saved" : "Save item"}
+            aria-pressed={favorited}
+            className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition hover:bg-black/70"
+          >
+            <span aria-hidden className={favorited ? "text-red-400" : "text-white"}>
+              {favorited ? "♥" : "♡"}
+            </span>
+          </button>
         )}
       </div>
 

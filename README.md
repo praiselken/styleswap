@@ -65,34 +65,40 @@ Homebrew install on its own, so no shell configuration is needed.
 ```
 app/
   page.tsx              Landing page
-  marketplace/          Browse, filter and search listings
+  marketplace/          Browse, filter, sort and search listings
   listing/[id]/         Individual listing page
   create/               Create-listing form
   login/, register/     Email/password auth
   profile/[uid]/        Public seller profile and their active listings
   profile/edit/         Edit your own profile
+  saved/                Favorited listings
   dashboard/            Signed-in home
   layout.tsx            Shell: fonts, metadata, video background, header
 
 components/
-  Hero, FeaturedListings, Categories    Landing sections
-  ListingCard                           Shared by the landing grid and marketplace
-  MarketplaceBrowser                    Browsing, filtering and search
-  ListingDetail                         Individual listing page
+  Hero, FeaturedListings, Categories, InstagramFeed    Landing sections
+  ListingCard                           Shared by the landing grid, marketplace, saved and profile
+  MarketplaceBrowser                    Browsing, filtering, sorting and search
+  ListingDetail                         Individual listing page, incl. "more from this seller"
   CreateListingForm                     Photo upload + validated listing form
   LoginForm, RegisterForm               Auth forms
   Header                                Site nav, auth-aware
   Dashboard                             Signed-in home
   ProfileView, EditProfileForm          Public profile and its editor
+  SavedListings                         Favorited listings
+  StarRating                            Mock seller rating display
   BackgroundVideo                       Full-screen video with reduced-motion fallback
 
 lib/
   firebase.ts           SDK init, env config, emulator wiring
-  listings.ts           Listing types, Firestore reads and writes, filtering
+  listings.ts           Listing types, Firestore reads/writes, filtering and sorting
   storageUploads.ts     Validated photo uploads
   auth.ts               Registration, login, session handling
   users.ts              Profile reads and writes
+  favorites.ts           Favorite reads and writes
+  mockRating.ts          Deterministic cosmetic seller rating (no real reviews yet)
   useAuthUser.ts         Hook exposing the signed-in user (anonymous sessions excluded)
+  useFavorites.ts        Hook exposing and toggling the signed-in user's favorites
 
 firestore.rules         Firestore security rules
 storage.rules           Storage security rules
@@ -125,6 +131,17 @@ view is shareable and the back button behaves.
 poster frame with `preload="metadata"`, and viewers who ask for reduced motion
 get the still image and never download the video at all.
 
+**Seller ratings are cosmetic.** There's no transaction history to rate
+sellers on yet, so `mockRatingFor` derives a stable-looking star rating and
+review count from the seller's uid — same uid always yields the same
+numbers, rather than a random one that would flicker on every load. It's
+isolated to one function specifically so it's easy to delete once real
+reviews exist.
+
+**The Instagram feed is a static grid, not a real integration.** The photos
+are hand-picked from Pexels (free license, no attribution required) and
+hardcoded — no API key ships with the app.
+
 ---
 
 ## Security rules
@@ -134,7 +151,11 @@ enforced by the emulator during development:
 
 - The marketplace and profiles are readable without an account.
 - Sellers write only as themselves, and only into their own storage folder.
-- Listing and profile fields are shape-checked server-side, not just in the form.
+- Favorites are readable and writable only by the account that owns them —
+  enforced by the doc id itself, which pins each one to a single (user,
+  listing) pair.
+- Listing, profile and favorite fields are shape-checked server-side, not
+  just in the form.
 - Photos are capped at 5MB and limited to JPEG, PNG and WebP.
 - Anything unmatched is denied.
 
@@ -152,6 +173,11 @@ Deploy them with `firebase deploy --only firestore:rules,storage`.
 | Accounts — login, registration | Done |
 | User profiles — view and edit | Done |
 | Individual listing pages | Done |
+| Favorites / saved items | Done |
+| Sort and price-range filtering, brand field | Done |
+| Seller ratings | Cosmetic — mocked, no real reviews yet |
+| "More from this seller" bundle nudge | Done |
+| Instagram feed on the landing page | Done — static grid, not a real integration |
 | Security rules | Written and verified locally |
 | Messaging and collaboration | Not built |
 | Payments | Not built |

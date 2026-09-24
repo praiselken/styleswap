@@ -51,6 +51,12 @@ export default function Dashboard() {
           Edit profile
         </Link>
         <Link
+          href="/saved"
+          className="inline-flex rounded-xl border border-white px-5 py-3 text-sm font-medium transition hover:bg-white hover:text-black"
+        >
+          Saved items
+        </Link>
+        <Link
           href="/marketplace"
           className="inline-flex rounded-xl border border-white px-5 py-3 text-sm font-medium transition hover:bg-white hover:text-black"
         >

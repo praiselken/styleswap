@@ -10,6 +10,13 @@ const nextConfig: NextConfig = {
         hostname: "firebasestorage.googleapis.com",
         pathname: "/v0/b/**",
       },
+      // Stand-in photos for the landing page's Instagram grid — a demo
+      // placeholder, not a real Instagram integration. Sourced from Pexels
+      // (free license, no attribution required).
+      {
+        protocol: "https",
+        hostname: "images.pexels.com",
+      },
       // The Storage emulator serves photos from localhost, so next/image needs
       // to allow it too — but only when we're actually pointed at the emulator.
       ...(useEmulators

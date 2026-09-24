@@ -22,7 +22,9 @@ service cloud.firestore {
                     && request.resource.data.photos is list
                     && request.resource.data.photos.size() > 0
                     && request.resource.data.photos.size() <= 6
-                    && request.resource.data.status == 'active';
+                    && request.resource.data.status == 'active'
+                    && (!("brand" in request.resource.data)
+                        || (request.resource.data.brand is string && request.resource.data.brand.size() <= 40));
 
       // A seller owns their listing; the sellerId can never be reassigned.
       allow update: if request.auth != null
@@ -50,6 +52,22 @@ service cloud.firestore {
                         || (request.resource.data.location is string && request.resource.data.location.size() <= 60));
 
       allow delete: if false;
+    }
+
+    match /favorites/{favoriteId} {
+      // A favorite is only ever read back by its own owner, and the doc id
+      // pins it to exactly one (user, listing) pair so there's nothing to
+      // validate beyond ownership.
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.listingId is string
+                    && favoriteId == request.auth.uid + "_" + request.resource.data.listingId;
+
+      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
+
+      allow update: if false;
     }
 
     // Anything not matched above stays closed.

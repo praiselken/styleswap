@@ -3,20 +3,40 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import ListingCard from "./ListingCard";
-import { CATEGORIES, fetchListings, filterListings, type Listing } from "@/lib/listings";
+import {
+  CATEGORIES,
+  fetchListings,
+  filterListings,
+  sortListings,
+  type Listing,
+  type ListingSort,
+} from "@/lib/listings";
+import { useFavorites } from "@/lib/useFavorites";
 
 type LoadState = "loading" | "ready" | "error";
+
+const SORTS: { value: ListingSort; label: string }[] = [
+  { value: "newest", label: "Newest first" },
+  { value: "price_asc", label: "Price: low to high" },
+  { value: "price_desc", label: "Price: high to low" },
+];
 
 export default function MarketplaceBrowser() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user, favoriteIds, toggleFavorite } = useFavorites();
 
   const category = searchParams.get("category");
   const search = searchParams.get("q") ?? "";
+  const sort = (searchParams.get("sort") as ListingSort) || "newest";
+  const minPrice = searchParams.get("minPrice");
+  const maxPrice = searchParams.get("maxPrice");
 
   const [listings, setListings] = useState<Listing[]>([]);
   const [state, setState] = useState<LoadState>("loading");
   const [searchDraft, setSearchDraft] = useState(search);
+  const [minDraft, setMinDraft] = useState(minPrice ?? "");
+  const [maxDraft, setMaxDraft] = useState(maxPrice ?? "");
 
   useEffect(() => {
     let cancelled = false;
@@ -38,20 +58,35 @@ export default function MarketplaceBrowser() {
     };
   }, []);
 
-  // Keep the input in step when the URL changes from outside (back button, category
-  // links) without an effect round-trip: adjust during render, then re-render.
+  // Keep the inputs in step when the URL changes from outside (back button,
+  // category links) without an effect round-trip: adjust during render, then
+  // re-render.
   const [lastSearch, setLastSearch] = useState(search);
   if (search !== lastSearch) {
     setLastSearch(search);
     setSearchDraft(search);
   }
+  const priceKey = `${minPrice ?? ""}:${maxPrice ?? ""}`;
+  const [lastPriceKey, setLastPriceKey] = useState(priceKey);
+  if (priceKey !== lastPriceKey) {
+    setLastPriceKey(priceKey);
+    setMinDraft(minPrice ?? "");
+    setMaxDraft(maxPrice ?? "");
+  }
 
-  const visible = useMemo(
-    () => filterListings(listings, { category, search }),
-    [listings, category, search]
-  );
+  const visible = useMemo(() => {
+    const filtered = filterListings(listings, {
+      category,
+      search,
+      minPrice: minPrice ? Number(minPrice) : null,
+      maxPrice: maxPrice ? Number(maxPrice) : null,
+    });
+    return sortListings(filtered, sort);
+  }, [listings, category, search, minPrice, maxPrice, sort]);
 
-  function updateParams(next: { category?: string | null; q?: string | null }) {
+  function updateParams(
+    next: Partial<Record<"category" | "q" | "sort" | "minPrice" | "maxPrice", string | null>>
+  ) {
     const params = new URLSearchParams(searchParams.toString());
 
     for (const [key, value] of Object.entries(next)) {
@@ -128,6 +163,60 @@ export default function MarketplaceBrowser() {
         ))}
       </div>
 
+      <div className="mb-8 flex flex-wrap items-center gap-3">
+        <label className="flex items-center gap-2 text-sm opacity-80">
+          Sort
+          <select
+            value={sort}
+            onChange={(event) => updateParams({ sort: event.target.value })}
+            className="rounded-xl border border-white/30 bg-black/30 px-3 py-2 text-sm focus:border-white focus:outline-none"
+          >
+            {SORTS.map((option) => (
+              <option key={option.value} value={option.value} className="bg-black">
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <form
+          className="flex items-center gap-2 text-sm opacity-80"
+          onSubmit={(event) => {
+            event.preventDefault();
+            updateParams({ minPrice: minDraft || null, maxPrice: maxDraft || null });
+          }}
+        >
+          £
+          <input
+            type="number"
+            inputMode="numeric"
+            min="0"
+            value={minDraft}
+            onChange={(event) => setMinDraft(event.target.value)}
+            placeholder="Min"
+            aria-label="Minimum price"
+            className="w-20 rounded-xl border border-white/30 bg-black/30 px-3 py-2 text-sm placeholder:text-white/40 focus:border-white focus:outline-none"
+          />
+          <span aria-hidden>–</span>
+          <input
+            type="number"
+            inputMode="numeric"
+            min="0"
+            value={maxDraft}
+            onChange={(event) => setMaxDraft(event.target.value)}
+            placeholder="Max"
+            aria-label="Maximum price"
+            className="w-20 rounded-xl border border-white/30 bg-black/30 px-3 py-2 text-sm placeholder:text-white/40 focus:border-white focus:outline-none"
+          />
+          <button
+            type="submit"
+            className="rounded-xl border border-white/30 px-3 py-2 text-sm transition hover:border-white"
+          >
+            Go
+          </button>
+        </form>
+      </div>
+
       {state === "loading" && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, index) => (
@@ -182,8 +271,10 @@ export default function MarketplaceBrowser() {
                 price={listing.price}
                 photo={listing.photos[0]}
                 tag={listing.category}
-                meta={[listing.condition, listing.size].filter(Boolean).join(" • ")}
+                meta={[listing.brand, listing.condition, listing.size].filter(Boolean).join(" • ")}
                 href={`/listing/${listing.id}`}
+                favorited={favoriteIds.has(listing.id)}
+                onToggleFavorite={user ? () => toggleFavorite(listing.id) : undefined}
               />
             ))}
           </div>

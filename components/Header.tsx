@@ -33,6 +33,9 @@ export default function Header() {
         {!loading && (
           user ? (
             <>
+              <Link href="/saved" className={`hidden sm:inline-flex ${linkClass}`}>
+                Saved
+              </Link>
               <Link href="/dashboard" className={linkClass}>
                 Dashboard
               </Link>
