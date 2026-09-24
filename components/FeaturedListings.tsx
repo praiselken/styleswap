@@ -9,21 +9,21 @@ const demo = [
     price: 25,
     tag: "Trending",
     meta: "Used • Great",
-    photo: "https://images.pexels.com/photos/28468584/pexels-photo-28468584.jpeg?auto=compress&cs=tinysrgb&h=650&w=940", // Erick Nathng
+    photo: "https://images.pexels.com/photos/10906262/pexels-photo-10906262.jpeg?auto=compress&cs=tinysrgb&h=650&w=940", // moroccophobia
   },
   {
     title: "Carhartt Jacket",
     price: 45,
     tag: "New",
     meta: "Used • Excellent",
-    photo: "https://images.pexels.com/photos/6028279/pexels-photo-6028279.jpeg?auto=compress&cs=tinysrgb&h=650&w=940", // Mohamed Abdi Hujaale
+    photo: "https://images.pexels.com/photos/3524916/pexels-photo-3524916.jpeg?auto=compress&cs=tinysrgb&h=650&w=940", // Jonathon Burton
   },
   {
     title: "Levi’s 501 Jeans",
     price: 22,
     tag: "Deal",
     meta: "Used • Good",
-    photo: "https://images.pexels.com/photos/6439226/pexels-photo-6439226.jpeg?auto=compress&cs=tinysrgb&h=650&w=940", // Lucas Castro
+    photo: "https://images.pexels.com/photos/1598507/pexels-photo-1598507.jpeg?auto=compress&cs=tinysrgb&h=650&w=940", // Mnz
   },
   {
     title: "Puffer Coat",
@@ -44,7 +44,7 @@ const demo = [
     price: 28,
     tag: "Rare",
     meta: "Used • Great",
-    photo: "https://images.pexels.com/photos/26954376/pexels-photo-26954376.jpeg?auto=compress&cs=tinysrgb&h=650&w=940", // José Martin Segura Benites
+    photo: "https://images.pexels.com/photos/12194934/pexels-photo-12194934.jpeg?auto=compress&cs=tinysrgb&h=650&w=940", // Tarek Shahin
   },
 ];
 
