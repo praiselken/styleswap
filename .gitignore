@@ -47,3 +47,6 @@ Thr-Fit-Website-Handover.zip
 # firebase emulators
 .firebase/
 *-debug.log
+
+# scope notes — the contract PDF names the real client and unreleased brand
+/docs/

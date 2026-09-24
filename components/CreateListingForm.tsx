@@ -111,7 +111,7 @@ export default function CreateListingForm() {
       const user = await ensureSignedIn();
       const urls = await uploadListingPhotos(user.uid, photos.map((photo) => photo.file));
 
-      await createListing({
+      const docRef = await createListing({
         sellerId: user.uid,
         title: parsed.title,
         description: parsed.description,
@@ -123,7 +123,7 @@ export default function CreateListingForm() {
         photos: urls,
       });
 
-      router.push("/marketplace");
+      router.push(`/listing/${docRef.id}`);
     } catch (error) {
       console.error("Failed to create listing", error);
       setSubmitError(

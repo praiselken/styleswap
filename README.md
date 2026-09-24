@@ -1,12 +1,13 @@
-# Thr-Fit
+# StyleSwap
 
 A fashion resale marketplace — browse secondhand pieces, list your own, give clothing a second life.
 
 Built with Next.js 16 (App Router), React 19, Tailwind CSS v4 and Firebase.
 
-> **Background.** Thr-Fit began as a commissioned build that was paused partway
-> through. It's being completed here as a portfolio project, so the remaining
-> scope and design decisions are my own.
+> **Background.** This began as a commissioned build for a client that paused
+> partway through. It's being completed here, under a placeholder name and
+> brand, as a portfolio project — the remaining scope and design decisions are
+> my own.
 
 ---
 
@@ -65,22 +66,33 @@ Homebrew install on its own, so no shell configuration is needed.
 app/
   page.tsx              Landing page
   marketplace/          Browse, filter and search listings
+  listing/[id]/         Individual listing page
   create/               Create-listing form
-  dashboard/            Seller dashboard (not built yet)
-  layout.tsx            Shell: fonts, metadata, video background
+  login/, register/     Email/password auth
+  profile/[uid]/        Public seller profile and their active listings
+  profile/edit/         Edit your own profile
+  dashboard/            Signed-in home
+  layout.tsx            Shell: fonts, metadata, video background, header
 
 components/
   Hero, FeaturedListings, Categories    Landing sections
   ListingCard                           Shared by the landing grid and marketplace
   MarketplaceBrowser                    Browsing, filtering and search
+  ListingDetail                         Individual listing page
   CreateListingForm                     Photo upload + validated listing form
+  LoginForm, RegisterForm               Auth forms
+  Header                                Site nav, auth-aware
+  Dashboard                             Signed-in home
+  ProfileView, EditProfileForm          Public profile and its editor
   BackgroundVideo                       Full-screen video with reduced-motion fallback
 
 lib/
   firebase.ts           SDK init, env config, emulator wiring
   listings.ts           Listing types, Firestore reads and writes, filtering
   storageUploads.ts     Validated photo uploads
-  auth.ts               Session handling
+  auth.ts               Registration, login, session handling
+  users.ts              Profile reads and writes
+  useAuthUser.ts         Hook exposing the signed-in user (anonymous sessions excluded)
 
 firestore.rules         Firestore security rules
 storage.rules           Storage security rules
@@ -100,10 +112,11 @@ matching index in `firestore.indexes.json`.
 filters the fetched page in the browser. Real full-text search means Algolia or
 Typesense; that's the upgrade path, not a workaround to keep.
 
-**Sellers are signed in anonymously.** Listings need a stable `sellerId` before
-the login screens exist. Linking a credential to an anonymous account preserves
-its uid, so listings created now stay attached to their seller once real accounts
-land.
+**Guests get an anonymous session.** Creating a listing before registering
+signs the visitor in anonymously, so it always has a stable `sellerId`.
+Registering afterwards links the new credential to that anonymous account
+instead of replacing it, which preserves the uid — so listings created before
+sign-up stay attached to the seller once they have a real account.
 
 **Filters live in the URL.** Category and search are query params, so a filtered
 view is shareable and the back button behaves.
@@ -119,9 +132,9 @@ get the still image and never download the video at all.
 [`firestore.rules`](firestore.rules) and [`storage.rules`](storage.rules) are
 enforced by the emulator during development:
 
-- The marketplace is readable without an account.
+- The marketplace and profiles are readable without an account.
 - Sellers write only as themselves, and only into their own storage folder.
-- Listing fields are shape-checked server-side, not just in the form.
+- Listing and profile fields are shape-checked server-side, not just in the form.
 - Photos are capped at 5MB and limited to JPEG, PNG and WebP.
 - Anything unmatched is denied.
 
@@ -136,10 +149,10 @@ Deploy them with `firebase deploy --only firestore:rules,storage`.
 | Landing page | Done |
 | Marketplace browsing, filtering, search | Done |
 | Create-listing form with photo upload | Done |
+| Accounts — login, registration | Done |
+| User profiles — view and edit | Done |
+| Individual listing pages | Done |
 | Security rules | Written and verified locally |
-| Accounts — login, registration, profiles | Not built |
-| Individual listing pages | Not built |
-| Seller dashboard | Placeholder |
 | Messaging and collaboration | Not built |
 | Payments | Not built |
 

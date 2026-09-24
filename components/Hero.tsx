@@ -6,7 +6,7 @@ export default function Hero() {
 
         {/* 🟣 TITLE — Yeseva */}
         <h1 className="font-yeseva text-5xl md:text-7xl lg:text-8xl tracking-wide drop-shadow-2xl">
-          Thr-fited.
+          Restyled.
         </h1>
         <h1 className="font-roboto text-5xl md:text-7xl lg:text-8xl tracking-wide drop-shadow-2xl">
           Reimagined.

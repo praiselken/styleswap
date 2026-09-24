@@ -66,11 +66,11 @@ export default function MarketplaceBrowser() {
   }
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-12">
+    <section className="mx-auto max-w-6xl px-4 pb-12 pt-28 md:pt-32">
       <header className="mb-8">
         <h1 className="font-yeseva text-4xl md:text-5xl">Marketplace</h1>
         <p className="mt-2 text-sm opacity-75">
-          Every piece listed by the Thr-Fit community.
+          Every piece listed by the StyleSwap community.
         </p>
       </header>
 
@@ -183,6 +183,7 @@ export default function MarketplaceBrowser() {
                 photo={listing.photos[0]}
                 tag={listing.category}
                 meta={[listing.condition, listing.size].filter(Boolean).join(" • ")}
+                href={`/listing/${listing.id}`}
               />
             ))}
           </div>

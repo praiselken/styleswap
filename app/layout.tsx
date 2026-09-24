@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Yeseva_One, Roboto } from "next/font/google";
 import BackgroundVideo from "@/components/BackgroundVideo";
+import Header from "@/components/Header";
 
 const yeseva = Yeseva_One({
   subsets: ["latin"],
@@ -17,22 +18,22 @@ const roboto = Roboto({
 
 export const metadata: Metadata = {
   title: {
-    default: "Thr-Fit — Thr-fited. Reimagined.",
-    template: "%s | Thr-Fit",
+    default: "StyleSwap — Restyled. Reimagined.",
+    template: "%s | StyleSwap",
   },
   description:
-    "Discover unique fashion finds, list your own pieces, and give clothing a second life on Thr-Fit.",
+    "Discover unique fashion finds, list your own pieces, and give clothing a second life on StyleSwap.",
   keywords: ["thrift", "resale", "vintage", "streetwear", "sustainable fashion", "marketplace"],
   openGraph: {
-    title: "Thr-Fit — Thr-fited. Reimagined.",
+    title: "StyleSwap — Restyled. Reimagined.",
     description:
       "Discover unique fashion finds, list your own pieces, and give clothing a second life.",
     type: "website",
-    siteName: "Thr-Fit",
+    siteName: "StyleSwap",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Thr-Fit — Thr-fited. Reimagined.",
+    title: "StyleSwap — Restyled. Reimagined.",
     description:
       "Discover unique fashion finds, list your own pieces, and give clothing a second life.",
   },
@@ -47,6 +48,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         {/* 🌑 Overlay for readability */}
         <div className="fixed inset-0 z-[-1] bg-black/10" />
+
+        <Header />
 
         {/* 📦 Content above all */}
         <div className="relative z-10">{children}</div>

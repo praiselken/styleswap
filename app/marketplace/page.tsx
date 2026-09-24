@@ -5,7 +5,7 @@ import MarketplaceBrowser from "@/components/MarketplaceBrowser";
 export const metadata: Metadata = {
   title: "Marketplace",
   description:
-    "Browse every piece listed by the Thr-Fit community — hoodies, jackets, vintage, streetwear and more.",
+    "Browse every piece listed by the StyleSwap community — hoodies, jackets, vintage, streetwear and more.",
 };
 
 export default function MarketplacePage() {

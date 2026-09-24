@@ -33,6 +33,25 @@ service cloud.firestore {
                     && resource.data.sellerId == request.auth.uid;
     }
 
+    match /users/{userId} {
+      // Profiles are public — sellers link to them from their listings.
+      allow read: if true;
+
+      // Only the account owner can create or edit their own profile, and only
+      // with fields that hold their expected shape.
+      allow create, update: if request.auth != null
+                    && request.auth.uid == userId
+                    && request.resource.data.displayName is string
+                    && request.resource.data.displayName.size() >= 1
+                    && request.resource.data.displayName.size() <= 60
+                    && (!("bio" in request.resource.data)
+                        || (request.resource.data.bio is string && request.resource.data.bio.size() <= 300))
+                    && (!("location" in request.resource.data)
+                        || (request.resource.data.location is string && request.resource.data.location.size() <= 60));
+
+      allow delete: if false;
+    }
+
     // Anything not matched above stays closed.
     match /{document=**} {
       allow read, write: if false;

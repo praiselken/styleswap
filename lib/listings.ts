@@ -1,6 +1,8 @@
 import {
   addDoc,
   collection,
+  doc,
+  getDoc,
   getDocs,
   limit as fbLimit,
   orderBy,
@@ -55,6 +57,25 @@ export async function createListing(data: NewListing) {
   });
 }
 
+function toListing(id: string, data: Record<string, unknown>): Listing {
+  const createdAt = data.createdAt;
+
+  return {
+    id,
+    sellerId: typeof data.sellerId === "string" ? data.sellerId : "",
+    title: typeof data.title === "string" ? data.title : "Untitled",
+    description: typeof data.description === "string" ? data.description : "",
+    price: typeof data.price === "number" ? data.price : 0,
+    size: typeof data.size === "string" ? data.size : undefined,
+    category: typeof data.category === "string" ? data.category : undefined,
+    condition: typeof data.condition === "string" ? data.condition : undefined,
+    location: typeof data.location === "string" ? data.location : undefined,
+    photos: Array.isArray(data.photos) ? data.photos : [],
+    status: (typeof data.status === "string" ? data.status : "active") as ListingStatus,
+    createdAt: createdAt instanceof Timestamp ? createdAt.toDate() : undefined,
+  };
+}
+
 /**
  * Fetches the most recent listings.
  *
@@ -68,30 +89,20 @@ export async function fetchListings(max = 60): Promise<Listing[]> {
     query(collection(db, "listings"), orderBy("createdAt", "desc"), fbLimit(max))
   );
 
-  return snapshot.docs.map((doc) => {
-    const data = doc.data();
-    const createdAt = data.createdAt;
+  return snapshot.docs.map((doc) => toListing(doc.id, doc.data()));
+}
 
-    return {
-      id: doc.id,
-      sellerId: data.sellerId ?? "",
-      title: data.title ?? "Untitled",
-      description: data.description ?? "",
-      price: typeof data.price === "number" ? data.price : 0,
-      size: data.size,
-      category: data.category,
-      condition: data.condition,
-      location: data.location,
-      photos: Array.isArray(data.photos) ? data.photos : [],
-      status: (data.status ?? "active") as ListingStatus,
-      createdAt: createdAt instanceof Timestamp ? createdAt.toDate() : undefined,
-    };
-  });
+export async function fetchListing(id: string): Promise<Listing | null> {
+  const snapshot = await getDoc(doc(db, "listings", id));
+  if (!snapshot.exists()) return null;
+
+  return toListing(snapshot.id, snapshot.data());
 }
 
 export type ListingFilters = {
   category?: string | null;
   search?: string | null;
+  sellerId?: string | null;
 };
 
 /**
@@ -104,6 +115,8 @@ export function filterListings(listings: Listing[], filters: ListingFilters) {
 
   return listings.filter((listing) => {
     if (listing.status !== "active") return false;
+
+    if (filters.sellerId && listing.sellerId !== filters.sellerId) return false;
 
     if (filters.category && listing.category !== filters.category) return false;
 
