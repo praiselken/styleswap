@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "emulators": "PATH=\"/opt/homebrew/opt/openjdk/bin:/usr/local/opt/openjdk/bin:$PATH\" firebase emulators:start --only auth,firestore,storage",
-    "dev:emulator": "NEXT_PUBLIC_FIREBASE_EMULATORS=true next dev"
+    "dev:emulator": "NEXT_PUBLIC_FIREBASE_EMULATORS=true next dev",
+    "seed": "tsx scripts/seed.ts",
+    "seed:clear": "tsx scripts/seed.ts --clear"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -27,8 +29,10 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "firebase-admin": "^14.5.0",
     "firebase-tools": "^15.30.2",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

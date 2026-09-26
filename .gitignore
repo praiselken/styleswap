@@ -50,3 +50,8 @@ Thr-Fit-Website-Handover.zip
 
 # scope notes — the contract PDF names the real client and unreleased brand
 /docs/
+
+# seed script service-account credentials — never commit these
+/secrets/
+*serviceAccount*.json
+*service-account*.json

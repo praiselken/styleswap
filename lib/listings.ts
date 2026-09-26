@@ -8,6 +8,7 @@ import {
   orderBy,
   query,
   Timestamp,
+  where,
 } from "firebase/firestore";
 import { db } from "./firebase";
 
@@ -46,6 +47,10 @@ export type Listing = {
   photos: string[];
   status: ListingStatus;
   createdAt?: Date;
+  /** Set only by the admin seed script — clients can never set or change this. */
+  featured?: boolean;
+  /** Set only by the admin seed script — marks demo data for badges and cleanup. */
+  isSample?: boolean;
 };
 
 export type NewListing = Omit<Listing, "id" | "status" | "createdAt">;
@@ -75,6 +80,8 @@ function toListing(id: string, data: Record<string, unknown>): Listing {
     photos: Array.isArray(data.photos) ? data.photos : [],
     status: (typeof data.status === "string" ? data.status : "active") as ListingStatus,
     createdAt: createdAt instanceof Timestamp ? createdAt.toDate() : undefined,
+    featured: data.featured === true,
+    isSample: data.isSample === true,
   };
 }
 
@@ -99,6 +106,25 @@ export async function fetchListing(id: string): Promise<Listing | null> {
   if (!snapshot.exists()) return null;
 
   return toListing(snapshot.id, snapshot.data());
+}
+
+/**
+ * Fetches the landing page's "Trending right now" picks — listings the seed
+ * script (or, one day, an admin) has marked `featured`. Requires the
+ * composite index in firestore.indexes.json (featured + status + createdAt).
+ */
+export async function fetchFeaturedListings(max = 6): Promise<Listing[]> {
+  const snapshot = await getDocs(
+    query(
+      collection(db, "listings"),
+      where("featured", "==", true),
+      where("status", "==", "active"),
+      orderBy("createdAt", "desc"),
+      fbLimit(max)
+    )
+  );
+
+  return snapshot.docs.map((doc) => toListing(doc.id, doc.data()));
 }
 
 export type ListingFilters = {
