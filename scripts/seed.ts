@@ -21,7 +21,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { cert, getApps, initializeApp } from "firebase-admin/app";
+import { applicationDefault, getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore, Timestamp, type WriteBatch } from "firebase-admin/firestore";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -48,15 +48,15 @@ function initAdmin() {
   const credPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
   if (!credPath) {
     throw new Error(
-      "Set GOOGLE_APPLICATION_CREDENTIALS to a service-account JSON file (outside the repo, or under a " +
-        "gitignored path like /secrets), or set FIRESTORE_EMULATOR_HOST to target the emulator instead."
+      "Set GOOGLE_APPLICATION_CREDENTIALS to a credentials JSON file — a service-account key, or an " +
+        "Application Default Credentials file from `gcloud auth application-default login` (outside the repo, " +
+        "or under a gitignored path like /secrets) — or set FIRESTORE_EMULATOR_HOST to target the emulator instead."
     );
   }
 
   console.log(`Targeting the live project "${project}" with credentials from ${credPath}.`);
-  const serviceAccount = JSON.parse(readFileSync(credPath, "utf8"));
   return initializeApp({
-    credential: cert(serviceAccount),
+    credential: applicationDefault(),
     projectId: project,
   });
 }
