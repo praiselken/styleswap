@@ -5,10 +5,12 @@ import Link from "next/link";
 import ListingCard from "./ListingCard";
 import { fetchListings, type Listing } from "@/lib/listings";
 import { useFavorites } from "@/lib/useFavorites";
+import { useRequireAuth } from "@/lib/useRequireAuth";
 
 type LoadState = "loading" | "ready" | "error";
 
 export default function SavedListings() {
+  const { user: authUser, loading: authLoading } = useRequireAuth();
   const { user, favoriteIds, toggleFavorite } = useFavorites();
   const [listings, setListings] = useState<Listing[]>([]);
   const [state, setState] = useState<LoadState>("loading");
@@ -40,19 +42,7 @@ export default function SavedListings() {
     };
   }, [user]);
 
-  if (!user) {
-    return (
-      <div className="rounded-2xl border border-white/20 p-10 text-center">
-        <p className="font-medium">Log in to see your saved items.</p>
-        <Link
-          href="/login"
-          className="mt-6 inline-flex rounded-xl border border-white bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-transparent hover:text-white"
-        >
-          Log in
-        </Link>
-      </div>
-    );
-  }
+  if (authLoading || !authUser) return null;
 
   const visible = listings.filter((listing) => favoriteIds.has(listing.id));
 

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import LoginForm from "@/components/LoginForm";
 
@@ -12,7 +13,9 @@ export default function LoginPage() {
       <h1 className="font-yeseva text-4xl md:text-5xl">Welcome back</h1>
       <p className="mt-3 opacity-80">Log in to manage your listings.</p>
 
-      <LoginForm />
+      <Suspense fallback={null}>
+        <LoginForm />
+      </Suspense>
     </main>
   );
 }

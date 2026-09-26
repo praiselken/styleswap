@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import SavedListings from "@/components/SavedListings";
 
@@ -12,7 +13,9 @@ export default function SavedPage() {
       <h1 className="font-yeseva text-4xl md:text-5xl">Saved</h1>
       <p className="mt-3 mb-8 opacity-80">Everything you&apos;ve favorited, in one place.</p>
 
-      <SavedListings />
+      <Suspense fallback={null}>
+        <SavedListings />
+      </Suspense>
     </main>
   );
 }

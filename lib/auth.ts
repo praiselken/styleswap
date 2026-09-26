@@ -1,10 +1,7 @@
 import { FirebaseError } from "firebase/app";
 import {
   createUserWithEmailAndPassword,
-  EmailAuthProvider,
-  linkWithCredential,
   onAuthStateChanged,
-  signInAnonymously,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
@@ -14,74 +11,24 @@ import { auth } from "./firebase";
 import { ensureUserProfile } from "./users";
 
 /**
- * Returns the current user, signing in anonymously if nobody is signed in.
+ * Notifies `callback` of the signed-in user, or null when signed out.
  *
- * Anonymous sessions give listings a real, stable sellerId before the login
- * and registration screens exist. When those land, linking a credential to the
- * anonymous account keeps the same uid, so listings created now stay attached
- * to their seller.
+ * Treats an anonymous session as signed out — the app itself never creates
+ * one anymore, but this stays defensive in case something outside the app
+ * (e.g. the Firebase console or SDK directly) starts one anyway.
  */
-export function ensureSignedIn(): Promise<User> {
-  return new Promise((resolve, reject) => {
-    const unsubscribe = onAuthStateChanged(
-      auth,
-      (user) => {
-        if (user) {
-          unsubscribe();
-          resolve(user);
-          return;
-        }
-
-        signInAnonymously(auth).catch((error) => {
-          unsubscribe();
-          reject(error);
-        });
-      },
-      (error) => {
-        unsubscribe();
-        reject(error);
-      }
-    );
-  });
-}
-
-/** Notifies `callback` of the signed-in user, treating anonymous sessions as signed out. */
 export function subscribeToAuthState(callback: (user: User | null) => void) {
   return onAuthStateChanged(auth, (user) => {
     callback(user && !user.isAnonymous ? user : null);
   });
 }
 
-/**
- * Registers a new account. If the current session is anonymous, links the
- * credential to it instead of creating a fresh user, so any listings already
- * published under that anonymous uid stay attached to the new account.
- */
 export async function registerWithEmail(
   email: string,
   password: string,
   name: string
 ): Promise<User> {
-  const current = auth.currentUser;
-  const credential = EmailAuthProvider.credential(email, password);
-  let user: User;
-
-  if (current?.isAnonymous) {
-    try {
-      user = (await linkWithCredential(current, credential)).user;
-    } catch (error) {
-      // Someone already owns this email — fall through to a normal sign-up,
-      // which surfaces the "already in use" error the same way it would if
-      // there had been no anonymous session at all.
-      if (!(error instanceof FirebaseError) || error.code !== "auth/email-already-in-use") {
-        throw error;
-      }
-      user = (await createUserWithEmailAndPassword(auth, email, password)).user;
-    }
-  } else {
-    user = (await createUserWithEmailAndPassword(auth, email, password)).user;
-  }
-
+  const { user } = await createUserWithEmailAndPassword(auth, email, password);
   await updateProfile(user, { displayName: name });
   await ensureUserProfile(user.uid, name);
   return user;

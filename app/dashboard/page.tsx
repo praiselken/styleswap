@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import Dashboard from "@/components/Dashboard";
 
@@ -9,7 +10,9 @@ export const metadata: Metadata = {
 export default function DashboardPage() {
   return (
     <main className="mx-auto max-w-2xl px-4 pb-24 pt-28 md:pt-32">
-      <Dashboard />
+      <Suspense fallback={null}>
+        <Dashboard />
+      </Suspense>
     </main>
   );
 }

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import CreateListingForm from "@/components/CreateListingForm";
 
@@ -14,7 +15,9 @@ export default function CreateListingPage() {
         Add photos, set a price, and go live in minutes.
       </p>
 
-      <CreateListingForm />
+      <Suspense fallback={null}>
+        <CreateListingForm />
+      </Suspense>
     </main>
   );
 }

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import EditProfileForm from "@/components/EditProfileForm";
 
@@ -12,7 +13,9 @@ export default function EditProfilePage() {
       <h1 className="font-yeseva text-4xl md:text-5xl">Edit profile</h1>
       <p className="mt-3 opacity-80">This is what other members will see.</p>
 
-      <EditProfileForm />
+      <Suspense fallback={null}>
+        <EditProfileForm />
+      </Suspense>
     </main>
   );
 }

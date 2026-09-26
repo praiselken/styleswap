@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { updateProfile } from "firebase/auth";
 import { fetchUserProfile, updateUserProfile } from "@/lib/users";
-import { useAuthUser } from "@/lib/useAuthUser";
+import { useRequireAuth } from "@/lib/useRequireAuth";
 
 const schema = z.object({
   displayName: z.string().trim().min(2, "Enter your name.").max(60),
@@ -24,7 +24,7 @@ const errorClass = "mt-1 text-xs text-red-300";
 
 export default function EditProfileForm() {
   const router = useRouter();
-  const { user, loading: userLoading } = useAuthUser();
+  const { user, loading: userLoading } = useRequireAuth();
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -65,11 +65,7 @@ export default function EditProfileForm() {
     }
   }
 
-  if (userLoading || (user && loadingProfile)) return null;
-
-  if (!user) {
-    return <p className="opacity-80">Log in to edit your profile.</p>;
-  }
+  if (userLoading || !user || loadingProfile) return null;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="mt-10 space-y-6" noValidate>

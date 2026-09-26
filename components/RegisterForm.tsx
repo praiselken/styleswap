@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -29,6 +29,7 @@ const errorClass = "mt-1 text-xs text-red-300";
 
 export default function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
@@ -42,7 +43,8 @@ export default function RegisterForm() {
     try {
       const parsed = schema.parse(values);
       await registerWithEmail(parsed.email, parsed.password, parsed.name);
-      router.push("/dashboard");
+      const redirect = searchParams.get("redirect");
+      router.push(redirect && redirect.startsWith("/") ? redirect : "/dashboard");
     } catch (error) {
       setSubmitError(authErrorMessage(error));
     }
@@ -126,7 +128,14 @@ export default function RegisterForm() {
 
       <p className="text-center text-sm opacity-75">
         Already have an account?{" "}
-        <Link href="/login" className="underline underline-offset-2 hover:opacity-100">
+        <Link
+          href={
+            searchParams.get("redirect")
+              ? `/login?redirect=${encodeURIComponent(searchParams.get("redirect")!)}`
+              : "/login"
+          }
+          className="underline underline-offset-2 hover:opacity-100"
+        >
           Log in
         </Link>
       </p>

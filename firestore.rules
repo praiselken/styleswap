@@ -3,35 +3,54 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isRegisteredUser() {
+      return request.auth != null
+             && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
+    function hasValidListingFields() {
+      return request.resource.data.title is string
+             && request.resource.data.title.size() >= 3
+             && request.resource.data.title.size() <= 80
+             && request.resource.data.description is string
+             && request.resource.data.description.size() <= 1000
+             && request.resource.data.price is number
+             && request.resource.data.price > 0
+             && request.resource.data.price <= 10000
+             && request.resource.data.photos is list
+             && request.resource.data.photos.size() > 0
+             && request.resource.data.photos.size() <= 6
+             && request.resource.data.status in ['active', 'sold', 'draft']
+             && (!("brand" in request.resource.data)
+                 || (request.resource.data.brand is string && request.resource.data.brand.size() <= 40));
+    }
+
     match /listings/{listingId} {
       // The marketplace is browsable without an account.
       allow read: if true;
 
-      // Anyone signed in — including anonymously — can list an item, but only
-      // as themselves, and only with fields that hold their expected shape.
-      allow create: if request.auth != null
+      // Only a real, registered account can list an item — never an
+      // anonymous session — and only as themselves, with fields that hold
+      // their expected shape. `featured` and `isSample` are admin-only: the
+      // seed script writes them with the Admin SDK, which bypasses these
+      // rules entirely, so a client is never allowed to set either one.
+      allow create: if isRegisteredUser()
                     && request.resource.data.sellerId == request.auth.uid
-                    && request.resource.data.title is string
-                    && request.resource.data.title.size() >= 3
-                    && request.resource.data.title.size() <= 80
-                    && request.resource.data.description is string
-                    && request.resource.data.description.size() <= 1000
-                    && request.resource.data.price is number
-                    && request.resource.data.price > 0
-                    && request.resource.data.price <= 10000
-                    && request.resource.data.photos is list
-                    && request.resource.data.photos.size() > 0
-                    && request.resource.data.photos.size() <= 6
-                    && request.resource.data.status == 'active'
-                    && (!("brand" in request.resource.data)
-                        || (request.resource.data.brand is string && request.resource.data.brand.size() <= 40));
+                    && hasValidListingFields()
+                    && !("featured" in request.resource.data)
+                    && !("isSample" in request.resource.data);
 
-      // A seller owns their listing; the sellerId can never be reassigned.
-      allow update: if request.auth != null
+      // A seller owns their listing; the sellerId can never be reassigned,
+      // the same field validation as create applies again, and `featured` /
+      // `isSample` can never be introduced or changed by a client update.
+      allow update: if isRegisteredUser()
                     && resource.data.sellerId == request.auth.uid
-                    && request.resource.data.sellerId == resource.data.sellerId;
+                    && request.resource.data.sellerId == resource.data.sellerId
+                    && hasValidListingFields()
+                    && request.resource.data.get('featured', false) == resource.data.get('featured', false)
+                    && request.resource.data.get('isSample', false) == resource.data.get('isSample', false);
 
-      allow delete: if request.auth != null
+      allow delete: if isRegisteredUser()
                     && resource.data.sellerId == request.auth.uid;
     }
 
@@ -41,7 +60,7 @@ service cloud.firestore {
 
       // Only the account owner can create or edit their own profile, and only
       // with fields that hold their expected shape.
-      allow create, update: if request.auth != null
+      allow create, update: if isRegisteredUser()
                     && request.auth.uid == userId
                     && request.resource.data.displayName is string
                     && request.resource.data.displayName.size() >= 1
@@ -60,7 +79,7 @@ service cloud.firestore {
       // validate beyond ownership.
       allow read: if request.auth != null && resource.data.userId == request.auth.uid;
 
-      allow create: if request.auth != null
+      allow create: if isRegisteredUser()
                     && request.resource.data.userId == request.auth.uid
                     && request.resource.data.listingId is string
                     && favoriteId == request.auth.uid + "_" + request.resource.data.listingId;
@@ -68,6 +87,12 @@ service cloud.firestore {
       allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
 
       allow update: if false;
+    }
+
+    match /outfits/{outfitId} {
+      // Outfits are curated demo content — public read, no client writes.
+      allow read: if true;
+      allow write: if false;
     }
 
     // Anything not matched above stays closed.

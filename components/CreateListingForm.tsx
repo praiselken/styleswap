@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { CATEGORIES, CONDITIONS, createListing } from "@/lib/listings";
 import { MAX_PHOTO_BYTES, uploadListingPhotos } from "@/lib/storageUploads";
-import { ensureSignedIn } from "@/lib/auth";
+import { useRequireAuth } from "@/lib/useRequireAuth";
 
 const MAX_PHOTOS = 6;
 
@@ -41,6 +41,7 @@ const errorClass = "mt-1 text-xs text-red-300";
 
 export default function CreateListingForm() {
   const router = useRouter();
+  const { user, loading: userLoading } = useRequireAuth();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -105,11 +106,11 @@ export default function CreateListingForm() {
   async function onSubmit(values: FormValues) {
     setSubmitError(null);
 
+    if (!user) return;
     if (photosMissing()) return;
 
     try {
       const parsed = schema.parse(values);
-      const user = await ensureSignedIn();
       const urls = await uploadListingPhotos(user.uid, photos.map((photo) => photo.file));
 
       const docRef = await createListing({
@@ -135,6 +136,8 @@ export default function CreateListingForm() {
       );
     }
   }
+
+  if (userLoading || !user) return null;
 
   return (
     <form

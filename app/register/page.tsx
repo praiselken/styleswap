@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import RegisterForm from "@/components/RegisterForm";
 
@@ -12,7 +13,9 @@ export default function RegisterPage() {
       <h1 className="font-yeseva text-4xl md:text-5xl">Create an account</h1>
       <p className="mt-3 opacity-80">Join StyleSwap to list items and track your sales.</p>
 
-      <RegisterForm />
+      <Suspense fallback={null}>
+        <RegisterForm />
+      </Suspense>
     </main>
   );
 }
