@@ -119,6 +119,7 @@ export default function ProfileView({ uid }: { uid: string }) {
               href={`/listing/${listing.id}`}
               favorited={favoriteIds.has(listing.id)}
               onToggleFavorite={viewer ? () => toggleFavorite(listing.id) : undefined}
+              isSample={listing.isSample}
             />
           ))}
         </div>

@@ -72,6 +72,7 @@ export default function FeaturedListings() {
                 tag={listing.category}
                 meta={[listing.brand, listing.condition].filter(Boolean).join(" • ")}
                 href={`/listing/${listing.id}`}
+                isSample={listing.isSample}
               />
             ))}
           </div>

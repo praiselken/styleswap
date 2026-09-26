@@ -275,6 +275,7 @@ export default function MarketplaceBrowser() {
                 href={`/listing/${listing.id}`}
                 favorited={favoriteIds.has(listing.id)}
                 onToggleFavorite={user ? () => toggleFavorite(listing.id) : undefined}
+                isSample={listing.isSample}
               />
             ))}
           </div>

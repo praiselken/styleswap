@@ -13,6 +13,8 @@ export type ListingCardProps = {
   /** Omit to hide the favorite heart entirely (e.g. for logged-out demo data). */
   favorited?: boolean;
   onToggleFavorite?: () => void;
+  /** Shows a small "Sample" badge — demo data seeded for the portfolio build. */
+  isSample?: boolean;
 };
 
 export default function ListingCard({
@@ -24,15 +26,19 @@ export default function ListingCard({
   href,
   favorited,
   onToggleFavorite,
+  isSample,
 }: ListingCardProps) {
   const card = (
     <article className="h-full rounded-2xl border border-white/20 bg-black/20 p-4 backdrop-blur-sm transition hover:border-white/50">
       <div className="flex items-center justify-between gap-2">
-        {tag ? (
-          <span className="rounded-full border border-white/30 px-2 py-1 text-xs">{tag}</span>
-        ) : (
-          <span />
-        )}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {tag && <span className="rounded-full border border-white/30 px-2 py-1 text-xs">{tag}</span>}
+          {isSample && (
+            <span className="rounded-full border border-dashed border-white/30 px-2 py-1 text-[11px] opacity-60">
+              Sample
+            </span>
+          )}
+        </div>
         <span className="text-sm font-semibold">£{price}</span>
       </div>
 

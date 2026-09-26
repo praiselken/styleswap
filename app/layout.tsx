@@ -53,6 +53,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         {/* 📦 Content above all */}
         <div className="relative z-10">{children}</div>
+
+        <footer className="relative z-10 px-4 py-6 text-center text-xs opacity-50">
+          Listings marked <span className="rounded-full border border-dashed border-white/30 px-1.5 py-0.5">Sample</span> are demo data.
+        </footer>
       </body>
     </html>
   );

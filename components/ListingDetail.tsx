@@ -158,10 +158,19 @@ export default function ListingDetail({ id }: { id: string }) {
             </span>
           )}
 
-          {listing.category && (
-            <span className="mb-3 inline-flex rounded-full border border-white/30 px-3 py-1 text-xs">
-              {listing.category}
-            </span>
+          {(listing.category || listing.isSample) && (
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              {listing.category && (
+                <span className="inline-flex rounded-full border border-white/30 px-3 py-1 text-xs">
+                  {listing.category}
+                </span>
+              )}
+              {listing.isSample && (
+                <span className="inline-flex rounded-full border border-dashed border-white/30 px-3 py-1 text-xs opacity-60">
+                  Sample listing
+                </span>
+              )}
+            </div>
           )}
 
           {listing.brand && <p className="text-sm font-medium opacity-80">{listing.brand}</p>}
@@ -205,6 +214,7 @@ export default function ListingDetail({ id }: { id: string }) {
                 href={`/listing/${other.id}`}
                 favorited={favoriteIds.has(other.id)}
                 onToggleFavorite={user ? () => toggleFavorite(other.id) : undefined}
+                isSample={other.isSample}
               />
             ))}
           </div>

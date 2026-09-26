@@ -85,6 +85,7 @@ export default function SavedListings() {
           href={`/listing/${listing.id}`}
           favorited
           onToggleFavorite={() => toggleFavorite(listing.id)}
+          isSample={listing.isSample}
         />
       ))}
     </div>
