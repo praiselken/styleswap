@@ -1,54 +1,39 @@
-import ListingCard from "./ListingCard";
+"use client";
 
-// Demo cards for the landing page — not real listings. Photos are
-// hand-picked from Pexels (free license, no attribution required);
-// photographers credited below anyway as a courtesy.
-const demo = [
-  {
-    title: "Vintage Nike Hoodie",
-    price: 25,
-    tag: "Trending",
-    meta: "Used • Great",
-    photo: "https://images.pexels.com/photos/10906262/pexels-photo-10906262.jpeg?auto=compress&cs=tinysrgb&h=650&w=940", // moroccophobia
-  },
-  {
-    title: "Carhartt Jacket",
-    price: 45,
-    tag: "New",
-    meta: "Used • Excellent",
-    photo: "https://images.pexels.com/photos/3524916/pexels-photo-3524916.jpeg?auto=compress&cs=tinysrgb&h=650&w=940", // Jonathon Burton
-  },
-  {
-    title: "Levi’s 501 Jeans",
-    price: 22,
-    tag: "Deal",
-    meta: "Used • Good",
-    photo: "https://images.pexels.com/photos/1598507/pexels-photo-1598507.jpeg?auto=compress&cs=tinysrgb&h=650&w=940", // Mnz
-  },
-  {
-    title: "Puffer Coat",
-    price: 35,
-    tag: "Hot",
-    meta: "Used • Great",
-    photo: "https://images.pexels.com/photos/14663219/pexels-photo-14663219.jpeg?auto=compress&cs=tinysrgb&h=650&w=940", // Rodrigo Arrosquipa
-  },
-  {
-    title: "Graphic Tee Bundle",
-    price: 15,
-    tag: "Bundle",
-    meta: "Used • Good",
-    photo: "https://images.pexels.com/photos/9902629/pexels-photo-9902629.jpeg?auto=compress&cs=tinysrgb&h=650&w=940", // armağan .
-  },
-  {
-    title: "Vintage Handbag",
-    price: 28,
-    tag: "Rare",
-    meta: "Used • Great",
-    photo: "https://images.pexels.com/photos/12194934/pexels-photo-12194934.jpeg?auto=compress&cs=tinysrgb&h=650&w=940", // Tarek Shahin
-  },
-];
+import { useEffect, useState } from "react";
+import ListingCard from "./ListingCard";
+import { fetchFeaturedListings, type Listing } from "@/lib/listings";
+
+type LoadState = "loading" | "ready" | "empty" | "error";
 
 export default function FeaturedListings() {
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [state, setState] = useState<LoadState>("loading");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchFeaturedListings()
+      .then((results) => {
+        if (cancelled) return;
+        setListings(results);
+        setState(results.length > 0 ? "ready" : "empty");
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        console.error("Failed to load featured listings", error);
+        setState("error");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Nothing to show and nothing wrong — just don't take up space on the
+  // landing page until there's something featured.
+  if (state === "empty" || state === "error") return null;
+
   return (
     <section className="py-12">
       <div className="mx-auto max-w-6xl px-4">
@@ -65,11 +50,32 @@ export default function FeaturedListings() {
           </a>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {demo.map((item) => (
-            <ListingCard key={item.title} {...item} href="/marketplace" />
-          ))}
-        </div>
+        {state === "loading" && (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div
+                key={index}
+                className="h-72 animate-pulse rounded-2xl border border-white/10 bg-white/5"
+              />
+            ))}
+          </div>
+        )}
+
+        {state === "ready" && (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {listings.map((listing) => (
+              <ListingCard
+                key={listing.id}
+                title={listing.title}
+                price={listing.price}
+                photo={listing.photos[0]}
+                tag={listing.category}
+                meta={[listing.brand, listing.condition].filter(Boolean).join(" • ")}
+                href={`/listing/${listing.id}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
