@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const cats = [
   "Hoodies",
   "Jackets",
@@ -33,6 +35,23 @@ export default function Categories() {
         </div>
 
         <div className="mt-10 rounded-3xl border p-6 md:p-8">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h3 className="text-xl font-semibold">Not sure where to start?</h3>
+              <p className="mt-1 text-sm opacity-75">
+                Browse full outfits built from real listings, then shop the look.
+              </p>
+            </div>
+            <Link
+              href="/outfits"
+              className="inline-flex w-fit rounded-xl bg-white px-5 py-3 text-black transition hover:scale-105 hover:bg-transparent hover:text-white border border-white"
+            >
+              Shop the look
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-6 rounded-3xl border p-6 md:p-8">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <h3 className="text-xl font-semibold">Ready to sell your first item?</h3>

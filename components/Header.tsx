@@ -26,6 +26,9 @@ export default function Header() {
         <Link href="/marketplace" className={`hidden sm:inline-flex ${linkClass}`}>
           Marketplace
         </Link>
+        <Link href="/outfits" className={`hidden sm:inline-flex ${linkClass}`}>
+          Outfits
+        </Link>
         <Link href="/create" className={`hidden sm:inline-flex ${linkClass}`}>
           Sell
         </Link>
