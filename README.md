@@ -29,7 +29,7 @@ further downstream.
 
 ### Local development without touching a real project
 
-The full publish path — anonymous sign-in, photo upload, Firestore write — runs
+The full publish path — registration, photo upload, Firestore write — runs
 against the local emulator suite, so development never writes to a live Firebase
 project.
 
@@ -45,6 +45,35 @@ The emulator wiring is gated behind `NEXT_PUBLIC_FIREBASE_EMULATORS`, so a plain
 `brew install openjdk` is enough; the `emulators` script finds a keg-only
 Homebrew install on its own, so no shell configuration is needed.
 
+### Seeding sample data
+
+The marketplace and outfit pages read from Firestore, so a fresh project has
+nothing to show until it's seeded. `scripts/seed.ts` writes fictional sellers,
+listings and outfits — every document it writes carries `isSample: true` and a
+fixed id, so re-running is a no-op rather than a pile of duplicates.
+
+Against the emulator (no credentials needed):
+
+```bash
+npm run emulators                                          # in one terminal
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 npm run seed         # in another
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 npm run seed:clear   # to remove it again
+```
+
+Against a live project, the script writes with the Firebase Admin SDK, so it
+needs a service account key — **never commit one**:
+
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS=/path/outside/the/repo/service-account.json
+npm run seed
+npm run seed:clear
+```
+
+`.gitignore` already excludes `/secrets/` and any `*serviceAccount*.json` /
+`*service-account*.json` path, so a key kept in `secrets/` at the repo root
+never gets staged by accident — but the safest place for it is still outside
+the repo entirely.
+
 ---
 
 ## Scripts
@@ -57,6 +86,8 @@ Homebrew install on its own, so no shell configuration is needed.
 | `npm run build` | Production build |
 | `npm run start` | Serve the production build |
 | `npm run lint` | ESLint |
+| `npm run seed` | Write sample sellers, listings and outfits to Firestore |
+| `npm run seed:clear` | Delete every document with `isSample == true` |
 
 ---
 
@@ -67,18 +98,21 @@ app/
   page.tsx              Landing page
   marketplace/          Browse, filter, sort and search listings
   listing/[id]/         Individual listing page
-  create/               Create-listing form
-  login/, register/     Email/password auth
+  outfits/               Outfit discovery grid, with a tag filter
+  outfits/[id]/          Individual outfit page — cover, description, "shop the look"
+  create/               Create-listing form (requires a registered account)
+  login/, register/     Email/password auth, honour ?redirect= back to where you started
   profile/[uid]/        Public seller profile and their active listings
-  profile/edit/         Edit your own profile
-  saved/                Favorited listings
-  dashboard/            Signed-in home
-  layout.tsx            Shell: fonts, metadata, video background, header
+  profile/edit/         Edit your own profile (requires a registered account)
+  saved/                Favorited listings (requires a registered account)
+  dashboard/            Signed-in home (requires a registered account)
+  layout.tsx            Shell: fonts, metadata, video background, header, footer
 
 components/
   Hero, FeaturedListings, Categories, InstagramFeed    Landing sections
-  ListingCard                           Shared by the landing grid, marketplace, saved and profile
+  ListingCard                           Shared by the landing grid, marketplace, saved, profile and outfits
   MarketplaceBrowser                    Browsing, filtering, sorting and search
+  OutfitsBrowser, OutfitDetail          Outfit discovery grid and individual outfit page
   ListingDetail                         Individual listing page, incl. "more from this seller"
   CreateListingForm                     Photo upload + validated listing form
   LoginForm, RegisterForm               Auth forms
@@ -91,38 +125,54 @@ components/
 
 lib/
   firebase.ts           SDK init, env config, emulator wiring
-  listings.ts           Listing types, Firestore reads/writes, filtering and sorting
+  listings.ts           Listing types, Firestore reads/writes, filtering, sorting, featured query
+  outfits.ts             Outfit type and Firestore reads
   storageUploads.ts     Validated photo uploads
   auth.ts               Registration, login, session handling
   users.ts              Profile reads and writes
   favorites.ts           Favorite reads and writes
   mockRating.ts          Deterministic cosmetic seller rating (no real reviews yet)
-  useAuthUser.ts         Hook exposing the signed-in user (anonymous sessions excluded)
+  useAuthUser.ts         Hook exposing the signed-in user
+  useRequireAuth.ts      Redirects a signed-out visitor to /login?redirect=<path>
   useFavorites.ts        Hook exposing and toggling the signed-in user's favorites
 
-firestore.rules         Firestore security rules
-storage.rules           Storage security rules
+scripts/seed.ts          Sample-data seed script (see "Seeding sample data" above)
+
+firestore.rules          Firestore security rules
+firestore.indexes.json   Composite index for the featured-listings query
+storage.rules            Storage security rules
 ```
 
 ---
 
 ## Notes on a few decisions
 
-**Listings are queried on a single field.** `fetchListings` orders by
-`createdAt` alone and narrows status and category in memory, which keeps it
-inside Firestore's automatic indexes — no composite index to configure. Past a
-few hundred listings those filters should move into `where()` clauses with a
-matching index in `firestore.indexes.json`.
+**Listings are queried on a single field, except for the featured query.**
+`fetchListings` orders by `createdAt` alone and narrows status and category in
+memory, which keeps it inside Firestore's automatic indexes. Past a few
+hundred listings those filters should move into `where()` clauses with a
+matching index. `fetchFeaturedListings` (the landing page's Trending section)
+already does this — `featured == true`, `status == 'active'`, ordered by
+`createdAt` — and needs the composite index in `firestore.indexes.json`
+deployed for it to work.
 
 **Search runs client-side.** Firestore has no substring matching, so search
 filters the fetched page in the browser. Real full-text search means Algolia or
 Typesense; that's the upgrade path, not a workaround to keep.
 
-**Guests get an anonymous session.** Creating a listing before registering
-signs the visitor in anonymously, so it always has a stable `sellerId`.
-Registering afterwards links the new credential to that anonymous account
-instead of replacing it, which preserves the uid — so listings created before
-sign-up stay attached to the seller once they have a real account.
+**Anonymous posting is not allowed.** Creating a listing, saving a favorite
+and editing a profile all require a real, registered account — there's no
+anonymous session anymore. Hitting `/create`, `/saved`, `/dashboard` or
+`/profile/edit` while signed out redirects to `/login?redirect=<path>` and
+sends you back once you sign in, and the rules enforce the same requirement
+server-side (`request.auth.token.firebase.sign_in_provider != 'anonymous'`),
+not just in the UI.
+
+**Sample data is real Firestore data, not hardcoded arrays.** Every seeded
+document — sellers, listings, outfits — carries `isSample: true`, is written
+only by `scripts/seed.ts` via the Admin SDK, and shows a small "Sample" badge
+in the UI. `featured` and `isSample` are both admin-only fields the security
+rules never let a client set or change.
 
 **Filters live in the URL.** Category and search are query params, so a filtered
 view is shareable and the back button behaves.
@@ -149,17 +199,32 @@ hardcoded — no API key ships with the app.
 [`firestore.rules`](firestore.rules) and [`storage.rules`](storage.rules) are
 enforced by the emulator during development:
 
-- The marketplace and profiles are readable without an account.
-- Sellers write only as themselves, and only into their own storage folder.
+- The marketplace, profiles and outfits are readable without an account.
+- Only a real, registered account — never an anonymous session — can create
+  or edit a listing, save a favorite, or edit a profile, and only as
+  themselves. Sellers write photos only into their own storage folder.
+- Listing `update` re-applies the same field validation as `create` (title,
+  description, price, photos, a `status` enum), keeps `sellerId` immutable,
+  and rejects any client attempt to set or change `featured` or `isSample` —
+  those are admin-only, written only by `scripts/seed.ts`.
 - Favorites are readable and writable only by the account that owns them —
   enforced by the doc id itself, which pins each one to a single (user,
   listing) pair.
-- Listing, profile and favorite fields are shape-checked server-side, not
-  just in the form.
+- Outfits are public read, no client writes at all.
 - Photos are capped at 5MB and limited to JPEG, PNG and WebP.
 - Anything unmatched is denied.
 
-Deploy them with `firebase deploy --only firestore:rules,storage`.
+There's no emulator rules-test harness in this repo; the checks above were
+verified manually against the emulator (anonymous create denied, a negative
+price on `update` denied, a client-set `featured: true` denied) — see the
+commit that introduced them for the exact requests used.
+
+Deploy them, together with the composite index the featured-listings query
+needs, with:
+
+```bash
+firebase deploy --only firestore:rules,firestore:indexes,storage
+```
 
 ---
 
@@ -167,18 +232,20 @@ Deploy them with `firebase deploy --only firestore:rules,storage`.
 
 | Area | State |
 |---|---|
-| Landing page | Done |
+| Landing page | Done — Trending section reads real featured listings from Firestore |
 | Marketplace browsing, filtering, search | Done |
-| Create-listing form with photo upload | Done |
-| Accounts — login, registration | Done |
+| Outfit discovery (`/outfits`, `/outfits/[id]`) | Done |
+| Create-listing form with photo upload | Done — requires a registered account |
+| Accounts — login, registration | Done — no anonymous posting |
 | User profiles — view and edit | Done |
 | Individual listing pages | Done |
 | Favorites / saved items | Done |
 | Sort and price-range filtering, brand field | Done |
+| Sample data (sellers, listings, outfits) | Seeded via `scripts/seed.ts`, labeled in the UI |
 | Seller ratings | Cosmetic — mocked, no real reviews yet |
 | "More from this seller" bundle nudge | Done |
 | Instagram feed on the landing page | Done — static grid, not a real integration |
-| Security rules | Written and verified locally |
+| Security rules | Written and manually verified against the emulator |
 | Messaging and collaboration | Not built |
 | Payments | Not built |
 
